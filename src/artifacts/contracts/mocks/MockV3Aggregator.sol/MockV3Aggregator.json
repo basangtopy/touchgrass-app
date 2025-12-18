@@ -1,0 +1,158 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "MockV3Aggregator",
+  "sourceName": "contracts/mocks/MockV3Aggregator.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "_decimals",
+          "type": "uint8"
+        },
+        {
+          "internalType": "int256",
+          "name": "_initialAnswer",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "answer",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "latestRoundData",
+      "outputs": [
+        {
+          "internalType": "uint80",
+          "name": "roundId_",
+          "type": "uint80"
+        },
+        {
+          "internalType": "int256",
+          "name": "answer_",
+          "type": "int256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startedAt_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "updatedAt_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint80",
+          "name": "answeredInRound_",
+          "type": "uint80"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "roundId",
+      "outputs": [
+        {
+          "internalType": "uint80",
+          "name": "",
+          "type": "uint80"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "_invalidPrice",
+          "type": "int256"
+        }
+      ],
+      "name": "setInvalidPrice",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "setStalePrice",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "setUpdatedAt",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "_answer",
+          "type": "int256"
+        }
+      ],
+      "name": "updateAnswer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "updatedAt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60803461008257601f6102f938819003918201601f19168301916001600160401b038311848410176100875780849260409485528339810103126100825780519060ff821680920361008257602001519060ff196000541617600055600155426002556001808060501b0319600354161760035560405161025b908161009e8239f35b600080fd5b634e487b7160e01b600052604160045260246000fdfe608060408181526004918236101561001657600080fd5b600092833560e01c9182631ecc7d881461020b578263313ce567146101ee575081633e3cab3e146101b35781637519ab501461019457816385bb7d69146101755781638cd221c91461014c57816394d6825b1461012e578163a87a20ce146100ce575063feaf968c1461008857600080fd5b346100ca57816003193601126100ca579060a09160018060501b0360035416906001549260025491805194848652602086015284015260608301526080820152f35b5080fd5b8390346100ca5760203660031901126100ca57803560015542600255600354906001600160501b03908183169081831461011b5750600101166001600160501b0319919091161760035580f35b634e487b7160e01b855260119052602484fd5b8390346100ca5760203660031901126100ca57356001554260025580f35b5050346100ca57816003193601126100ca5760035490516001600160501b039091168152602090f35b5050346100ca57816003193601126100ca576020906001549051908152f35b5050346100ca57816003193601126100ca576020906002549051908152f35b8390346100ca57816003193601126100ca5762093a7f194201904282116101db575060025580f35b634e487b7160e01b835260119052602482fd5b8490346100ca57816003193601126100ca5760ff60209254168152f35b8482346100ca5760203660031901126100ca573560025580f3fea2646970667358221220acbd63340033cb8081ae76984b2b4051497da0384c7d216084eb9ad39efc7ff264736f6c63430008140033",
+  "deployedBytecode": "0x608060408181526004918236101561001657600080fd5b600092833560e01c9182631ecc7d881461020b578263313ce567146101ee575081633e3cab3e146101b35781637519ab501461019457816385bb7d69146101755781638cd221c91461014c57816394d6825b1461012e578163a87a20ce146100ce575063feaf968c1461008857600080fd5b346100ca57816003193601126100ca579060a09160018060501b0360035416906001549260025491805194848652602086015284015260608301526080820152f35b5080fd5b8390346100ca5760203660031901126100ca57803560015542600255600354906001600160501b03908183169081831461011b5750600101166001600160501b0319919091161760035580f35b634e487b7160e01b855260119052602484fd5b8390346100ca5760203660031901126100ca57356001554260025580f35b5050346100ca57816003193601126100ca5760035490516001600160501b039091168152602090f35b5050346100ca57816003193601126100ca576020906001549051908152f35b5050346100ca57816003193601126100ca576020906002549051908152f35b8390346100ca57816003193601126100ca5762093a7f194201904282116101db575060025580f35b634e487b7160e01b835260119052602482fd5b8490346100ca57816003193601126100ca5760ff60209254168152f35b8482346100ca5760203660031901126100ca573560025580f3fea2646970667358221220acbd63340033cb8081ae76984b2b4051497da0384c7d216084eb9ad39efc7ff264736f6c63430008140033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

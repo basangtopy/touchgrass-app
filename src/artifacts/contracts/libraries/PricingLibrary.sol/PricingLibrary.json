@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "PricingLibrary",
+  "sourceName": "contracts/libraries/PricingLibrary.sol",
+  "abi": [],
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea2646970667358221220f6f798c83305f4a2cf00d6c68c2db67f4dc6d05fddcc64a3a693899e49e50f4064736f6c63430008140033",
+  "deployedBytecode": "0x600080fdfea2646970667358221220f6f798c83305f4a2cf00d6c68c2db67f4dc6d05fddcc64a3a693899e49e50f4064736f6c63430008140033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
