@@ -9,6 +9,7 @@ const hre = require("hardhat");
  * 3. MockV3Aggregator for USDC/USD price feed
  * 4. TouchGrass main contract
  * 5. TouchGrassNFT contract
+ * 6. TouchGrassViews contract (for admin dashboard)
  *
  * Then configures:
  * - Adds ETH token with mock price feed
@@ -50,7 +51,7 @@ async function main() {
   // =====================================================
   // 1. Deploy Mock USDC Token
   // =====================================================
-  console.log("📦 [1/5] Deploying Mock USDC...");
+  console.log("📦 [1/6] Deploying Mock USDC...");
   const MockERC20 = await hre.ethers.getContractFactory("MockERC20");
   const mockUSDC = await MockERC20.deploy("Mock USDC", "USDC");
   await mockUSDC.waitForDeployment();
@@ -60,7 +61,7 @@ async function main() {
   // =====================================================
   // 2. Deploy Mock ETH/USD Price Feed
   // =====================================================
-  console.log("📦 [2/5] Deploying Mock ETH/USD Price Feed...");
+  console.log("📦 [2/6] Deploying Mock ETH/USD Price Feed...");
   const MockV3Aggregator = await hre.ethers.getContractFactory(
     "MockV3Aggregator"
   );
@@ -78,7 +79,7 @@ async function main() {
   // =====================================================
   // 3. Deploy Mock USDC/USD Price Feed
   // =====================================================
-  console.log("📦 [3/5] Deploying Mock USDC/USD Price Feed...");
+  console.log("📦 [3/6] Deploying Mock USDC/USD Price Feed...");
 
   // USDC price: $1.00 with 8 decimals
   const usdcPriceUSD = 1 * 1e8; // $1.00
@@ -93,7 +94,7 @@ async function main() {
   // =====================================================
   // 4. Deploy TouchGrass Main Contract
   // =====================================================
-  console.log("📦 [4/5] Deploying TouchGrass Main Contract...");
+  console.log("📦 [4/6] Deploying TouchGrass Main Contract...");
 
   const usdcFee = 500000; // 0.5 USDC (6 decimals)
   const usdcMinStake = 1000000; // 1 USDC (6 decimals)
@@ -113,12 +114,24 @@ async function main() {
   // =====================================================
   // 5. Deploy TouchGrass NFT Contract
   // =====================================================
-  console.log("📦 [5/5] Deploying TouchGrassNFT Contract...");
+  console.log("📦 [5/6] Deploying TouchGrassNFT Contract...");
   const TouchGrassNFT = await hre.ethers.getContractFactory("TouchGrassNFT");
   const touchGrassNFT = await TouchGrassNFT.deploy(touchGrassAddress);
   await touchGrassNFT.waitForDeployment();
   const touchGrassNFTAddress = await touchGrassNFT.getAddress();
   console.log(`   ✅ TouchGrassNFT deployed to: ${touchGrassNFTAddress}`);
+
+  // =====================================================
+  // 6. Deploy TouchGrassViews Contract
+  // =====================================================
+  console.log("📦 [6/6] Deploying TouchGrassViews Contract...");
+  const TouchGrassViews = await hre.ethers.getContractFactory(
+    "TouchGrassViews"
+  );
+  const touchGrassViews = await TouchGrassViews.deploy(touchGrassAddress);
+  await touchGrassViews.waitForDeployment();
+  const touchGrassViewsAddress = await touchGrassViews.getAddress();
+  console.log(`   ✅ TouchGrassViews deployed to: ${touchGrassViewsAddress}`);
 
   // =====================================================
   // CONFIGURATION: Add Tokens
@@ -219,6 +232,9 @@ async function main() {
 
   console.log("\n📄 src/data/contractConfig.js:");
   console.log(`   export const CONTRACT_ADDRESS = "${touchGrassAddress}";`);
+  console.log(
+    `   export const VIEWS_CONTRACT_ADDRESS = "${touchGrassViewsAddress}";`
+  );
 
   console.log("\n📄 src/data/tokenConfig.js (update USDC address):");
   console.log(`   USDC: {`);
@@ -238,12 +254,13 @@ async function main() {
   console.log("\n" + "=".repeat(60));
   console.log("📋 QUICK REFERENCE - ALL CONTRACT ADDRESSES:");
   console.log("=".repeat(60));
-  console.log(`   TouchGrass:      ${touchGrassAddress}`);
-  console.log(`   TouchGrassNFT:   ${touchGrassNFTAddress}`);
-  console.log(`   Mock USDC:       ${mockUSDCAddress}`);
-  console.log(`   ETH Price Feed:  ${mockEthPriceFeedAddress}`);
-  console.log(`   USDC Price Feed: ${mockUsdcPriceFeedAddress}`);
-  console.log(`   Verifier:        ${verifier.address}`);
+  console.log(`   TouchGrass:       ${touchGrassAddress}`);
+  console.log(`   TouchGrassViews:  ${touchGrassViewsAddress}`);
+  console.log(`   TouchGrassNFT:    ${touchGrassNFTAddress}`);
+  console.log(`   Mock USDC:        ${mockUSDCAddress}`);
+  console.log(`   ETH Price Feed:   ${mockEthPriceFeedAddress}`);
+  console.log(`   USDC Price Feed:  ${mockUsdcPriceFeedAddress}`);
+  console.log(`   Verifier:         ${verifier.address}`);
   console.log("=".repeat(60));
 
   console.log("\n🎉 Local deployment complete!\n");

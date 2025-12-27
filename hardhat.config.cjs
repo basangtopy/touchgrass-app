@@ -17,10 +17,7 @@ module.exports = {
     // Base Sepolia (Testnet)
     baseSepolia: {
       url: "https://sepolia.base.org",
-      accounts: [
-        process.env.PRIVATE_KEY ||
-          "0000000000000000000000000000000000000000000000000000000000000000",
-      ],
+      accounts: [process.env.PRIVATE_KEY],
     },
     // Local Hardhat Network (for testing logic without spending real testnet ETH)
     hardhat: {

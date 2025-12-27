@@ -684,27 +684,23 @@ function getRecoverableETH() → uint256 recoverableAmount
 function getRecoverableTokensBySymbol(string calldata _symbol) → uint256 recoverableAmount
 function getRecoverableTokensByAddress(address _tokenAddress)
     → (uint256 recoverableAmount, bool isSupported, uint256 lockedAmount, uint256 pendingAmount)
-function getAllRecoveryStatus(uint256 _startIndex, uint256 _count)
-    → (symbols[], addresses[], contractBalances[], lockedAmounts[], pendingAmounts[], recoverableAmounts[], totalTokens)
-function hasRecoverableFunds(uint256 _startIndex, uint256 _count)
-    → (bool canRecover, uint256 totalRecoverableUSD, uint256 totalTokens)
 ```
 
 ### Auditing Functions
 
 ```solidity
-function getTokenProtectionBreakdown(string calldata _symbol)
-    → (contractBalance, lockedInChallenges, pendingAmount, protectedTotal, recoverable)
-
-function getGlobalProtectionSummary()
-    → (totalContractValueUSD, totalLockedUSD, totalPendingUSD, totalProtectedUSD, totalRecoverableUSD)
-
 function verifyFundAccounting(string calldata _symbol)
     → (bool isBalanced, uint256 discrepancy)
-
-function getChallengeLockedInfo(uint256 _challengeId)
-    → (staker, tokenId, tokenSymbol, stakeAmount, isWithdrawn, isSuccess, unlockTime)
 ```
+
+> **Note:** The following functions have been moved to the **TouchGrassViews** companion contract to reduce main contract bytecode size:
+>
+> - `getAllRecoveryStatus()`
+> - `hasRecoverableFunds()`
+> - `getTokenProtectionBreakdown()`
+> - `getGlobalProtectionSummary()`
+>
+> Deploy TouchGrassViews with the main contract address to access these functions.
 
 ---
 

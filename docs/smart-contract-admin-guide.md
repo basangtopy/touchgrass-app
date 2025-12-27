@@ -413,14 +413,15 @@ const recoverableUSDC = await contract.getRecoverableTokensBySymbol("USDC");
 const { recoverableAmount, isSupported, lockedAmount, pendingAmount } =
   await contract.getRecoverableTokensByAddress("0x...");
 
-// Global summary
+// Global summary (from TouchGrassViews contract)
+const viewsContract = new ethers.Contract(VIEWS_ADDRESS, VIEWS_ABI, provider);
 const {
   totalContractValueUSD,
   totalLockedUSD,
   totalPendingUSD,
   totalProtectedUSD,
   totalRecoverableUSD,
-} = await contract.getGlobalProtectionSummary();
+} = await viewsContract.getGlobalProtectionSummary();
 ```
 
 ### Recovery Functions
@@ -584,7 +585,10 @@ contract.on("TokenRemoved", handler);
 
 ### Recovery Status Dashboard
 
+> **Note:** `getAllRecoveryStatus()` is in the **TouchGrassViews** companion contract.
+
 ```javascript
+const viewsContract = new ethers.Contract(VIEWS_ADDRESS, VIEWS_ABI, provider);
 const {
   symbols,
   addresses,
@@ -593,7 +597,7 @@ const {
   pendingAmounts,
   recoverableAmounts,
   totalTokens,
-} = await contract.getAllRecoveryStatus(0, 100);
+} = await viewsContract.getAllRecoveryStatus(0, 100);
 
 // Display in admin dashboard
 for (let i = 0; i < symbols.length; i++) {

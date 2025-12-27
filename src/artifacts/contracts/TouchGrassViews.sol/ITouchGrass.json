@@ -1,0 +1,250 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "ITouchGrass",
+  "sourceName": "contracts/TouchGrassViews.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "challenges",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "staker",
+          "type": "address"
+        },
+        {
+          "internalType": "uint8",
+          "name": "penaltyPercent",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "penaltyType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "isSuccess",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "isWithdrawn",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint8",
+          "name": "lockMultiplierSnapshot",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint32",
+          "name": "gracePeriodSnapshot",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "tokenId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "stakeAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "duration",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startTime",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "charityWallet",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "getTokenPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "supportedTokenIds",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "tokenConfigs",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "isSupported",
+          "type": "bool"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "priceFeed",
+          "type": "address"
+        },
+        {
+          "internalType": "uint8",
+          "name": "decimals",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "priceStalenessTolerance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "useFallbackPrice",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "fallbackPrice",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "tokenSymbols",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "totalLockedByToken",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "totalPendingWithdrawals",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "treasuryWallet",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
