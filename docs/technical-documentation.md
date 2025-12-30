@@ -654,4 +654,4 @@ Quotes are stored in `/src/data/quotes.json` and mix Stoic philosophy, fitness m
 ---
 
 _Document Version: 1.0_  
-_Last Updated: December 2024_
+_Last Updated: December 2025_
