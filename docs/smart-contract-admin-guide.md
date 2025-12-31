@@ -236,7 +236,7 @@ Fee increases require 24-hour notice to protect users from sudden changes.
 
 ```javascript
 // Change fee to $2.00 (from $0.50)
-await contract.scheduleUSDCFeeUpdate(2); // In USDC units
+await contract.scheduleUSDCFeeUpdate(2000000n); // Base units (6 decimals)
 
 // → Emits: USDCFeeUpdateScheduled(2000000, effectiveTime)
 // → Users have 24 hours to create challenges at old rate
@@ -259,7 +259,7 @@ await contract.cancelUSDCFeeUpdate();
 
 ```javascript
 // Decreases execute immediately (benefits users)
-await contract.scheduleUSDCFeeUpdate(0.25); // $0.25
+await contract.scheduleUSDCFeeUpdate(250000n); // $0.25 in base units
 await contract.executeUSDCFeeUpdate(); // Can call immediately
 ```
 
@@ -277,9 +277,7 @@ await contract.executeUSDCFeeUpdate(); // Can call immediately
 
 ```javascript
 // Set minimum stake to $5.00
-await contract.setUSDCMinStake(5); // In USDC units
-
-// → Stored as 5000000 (6 decimals)
+await contract.setUSDCMinStake(5000000n); // Base units (6 decimals)
 ```
 
 No time-lock—minimum stake changes are immediate.

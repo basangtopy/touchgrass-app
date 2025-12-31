@@ -628,6 +628,7 @@ function setMinPenaltyPercentage(uint8 _newMinPenaltyPercentage) external onlyOw
 
 ```solidity
 // Schedule fee update (24h delay for increases, immediate for decreases)
+// _newUSDCFee in base units (6 decimals, e.g., 500000 = $0.50)
 function scheduleUSDCFeeUpdate(uint256 _newUSDCFee) external onlyOwner
 
 // Cancel pending update
@@ -637,6 +638,7 @@ function cancelUSDCFeeUpdate() external onlyOwner
 function executeUSDCFeeUpdate() external
 
 // Set minimum stake (immediate)
+// _newMinStake in base units (6 decimals, e.g., 5000000 = $5.00)
 function setUSDCMinStake(uint256 _newMinStake) external onlyOwner
 ```
 

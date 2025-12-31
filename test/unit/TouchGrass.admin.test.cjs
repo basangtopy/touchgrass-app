@@ -100,22 +100,30 @@ describe("TouchGrass - Admin Functions", function () {
   describe("Fee Updates (Timelock)", function () {
     it("should schedule fee update", async function () {
       const { touchGrass, owner } = await loadFixture(deployTouchGrassFixture);
-      await touchGrass.connect(owner).scheduleUSDCFeeUpdate(1);
+      await touchGrass.connect(owner).scheduleUSDCFeeUpdate(1000000n); // $1.00 in base units
       const pending = await touchGrass.pendingUSDCFeeUpdate();
       expect(pending.isPending).to.be.true;
     });
 
     it("should execute fee update after delay", async function () {
       const { touchGrass, owner } = await loadFixture(deployTouchGrassFixture);
-      await touchGrass.connect(owner).scheduleUSDCFeeUpdate(1);
+      await touchGrass.connect(owner).scheduleUSDCFeeUpdate(1000000n); // $1.00 in base units
       await advanceTime(FEE_UPDATE_DELAY + 60);
       await touchGrass.executeUSDCFeeUpdate();
       expect(await touchGrass.usdcFee()).to.equal(1000000n);
     });
 
+    it("should allow sub-dollar fee ($0.50)", async function () {
+      const { touchGrass, owner } = await loadFixture(deployTouchGrassFixture);
+      await touchGrass.connect(owner).scheduleUSDCFeeUpdate(500000n); // $0.50 in base units
+      await advanceTime(FEE_UPDATE_DELAY + 60);
+      await touchGrass.executeUSDCFeeUpdate();
+      expect(await touchGrass.usdcFee()).to.equal(500000n);
+    });
+
     it("should cancel fee update", async function () {
       const { touchGrass, owner } = await loadFixture(deployTouchGrassFixture);
-      await touchGrass.connect(owner).scheduleUSDCFeeUpdate(1);
+      await touchGrass.connect(owner).scheduleUSDCFeeUpdate(1000000n); // $1.00 in base units
       await touchGrass.connect(owner).cancelUSDCFeeUpdate();
       const pending = await touchGrass.pendingUSDCFeeUpdate();
       expect(pending.isPending).to.be.false;

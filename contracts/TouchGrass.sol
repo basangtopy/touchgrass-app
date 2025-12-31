@@ -388,7 +388,6 @@ contract TouchGrass is ReentrancyGuard, Ownable2Step, Pausable {
     uint256 public constant FEE_UPDATE_DELAY = 24 hours; // Users have 24h notice
     uint256 public constant MIN_USDC_FEE = 0.1 * 10 ** 6; // 0.1 USDC minimum
     uint256 public constant MAX_FEE_CHANGE_PERCENT = 500; // Max 5x change per update
-    uint256 public constant MAX_USDC_FEE_INPUT = type(uint256).max / 10 ** 6; // Overflow protection
     uint256 private constant GAS_STIPEND = 2300; // Enough for simple receives
     uint256 private constant PRICE_PRECISION = 1e18;
     uint256 public constant MAX_LOCK_MULTIPLIER = 15; // Max 15x lock extension
@@ -1538,22 +1537,16 @@ contract TouchGrass is ReentrancyGuard, Ownable2Step, Pausable {
     }
 
     /// @notice Schedule a USDC fee change (executes after 24 hours if is fee increase)
-    /// @notice Sets USDC fee using USDC units
-    /// @param _newUSDCFee Fee in USDC (e.g., 5 for 5 USDC)
+    /// @param _newUSDCFee Fee in base units (6 decimals, e.g., 500000 for $0.50)
     function scheduleUSDCFeeUpdate(uint256 _newUSDCFee) external onlyOwner {
         // Validation
         if (_newUSDCFee == 0) revert USDCFeeZero();
-        if (_newUSDCFee > MAX_USDC_FEE_INPUT) revert USDCFeeOverflow();
-
-        uint256 newFeeBaseUnits = _newUSDCFee * 10 ** 6;
-
-        if (newFeeBaseUnits == 0) revert USDCFeeZero();
-        if (newFeeBaseUnits < MIN_USDC_FEE) revert USDCFeeTooLow();
+        if (_newUSDCFee < MIN_USDC_FEE) revert USDCFeeTooLow();
 
         // Prevent drastic increase
         if (usdcFee > 0) {
             uint256 maxIncrease = (usdcFee * MAX_FEE_CHANGE_PERCENT) / 100;
-            if (newFeeBaseUnits > usdcFee + maxIncrease) {
+            if (_newUSDCFee > usdcFee + maxIncrease) {
                 revert FeeChangeTooLarge();
             }
         }
@@ -1561,7 +1554,7 @@ contract TouchGrass is ReentrancyGuard, Ownable2Step, Pausable {
         // Schedule the update
         uint256 effectiveTime;
         // Only allow increase if giving users notice
-        if (newFeeBaseUnits > usdcFee) {
+        if (_newUSDCFee > usdcFee) {
             // Fee increase: 24 hour delay
             effectiveTime = block.timestamp + FEE_UPDATE_DELAY;
         } else {
@@ -1570,12 +1563,12 @@ contract TouchGrass is ReentrancyGuard, Ownable2Step, Pausable {
         }
 
         pendingUSDCFeeUpdate = PendingFeeUpdate({
-            newFee: newFeeBaseUnits,
+            newFee: _newUSDCFee,
             effectiveTime: effectiveTime,
             isPending: true
         });
 
-        emit USDCFeeUpdateScheduled(newFeeBaseUnits, effectiveTime);
+        emit USDCFeeUpdateScheduled(_newUSDCFee, effectiveTime);
     }
 
     /// @notice Cancel pending fee update
@@ -1588,15 +1581,14 @@ contract TouchGrass is ReentrancyGuard, Ownable2Step, Pausable {
 
     /**
      * @notice Update base USDC minimum stake (affects all tokens)
-     * @param _newMinStake New minimum stake in USDC (6 decimals)
+     * @param _newMinStake New minimum stake in base units (6 decimals, e.g., 5000000 for $5)
      */
     function setUSDCMinStake(uint256 _newMinStake) external onlyOwner {
         if (_newMinStake == 0) revert InvalidTokenConfig();
 
         uint256 oldMinStake = usdcMinStake;
-        uint256 newMinStakeBaseUnits = _newMinStake * 10 ** 6;
-        usdcMinStake = newMinStakeBaseUnits;
-        emit BaseUSDCMinStakeUpdated(oldMinStake, newMinStakeBaseUnits);
+        usdcMinStake = _newMinStake;
+        emit BaseUSDCMinStakeUpdated(oldMinStake, _newMinStake);
     }
 
     /**
