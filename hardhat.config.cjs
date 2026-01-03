@@ -25,6 +25,17 @@ module.exports = {
       allowUnlimitedContractSize: true, // Allow large contracts for testing
     },
   },
+
+  etherscan: {
+    // Use single API key for Etherscan API v2
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+
+  // Disable sourcify to suppress the info message
+  sourcify: {
+    enabled: false,
+  },
+
   paths: {
     sources: "./contracts",
     tests: "./test",
