@@ -24,34 +24,27 @@ export function useIdentity(address) {
     chainId: mainnet.id,
   });
 
-  // 3. Farcaster Fetcher (Neynar API)
+  // 3. Farcaster Fetcher (via Server Proxy)
   useEffect(() => {
     if (!address) return;
 
     const fetchFarcaster = async () => {
       try {
-        // You need a generic API proxy or Neynar Key here.
-        // Ideally, route this through your server/index.js to hide the API Key.
-        // For demo, we assume a public endpoint or env var.
-        const NEYNAR_API_KEY = import.meta.env.VITE_NEYNAR_API_KEY;
+        // Route through server proxy to keep Neynar API key secure
+        const API_URL = import.meta.env.VITE_API_URL;
 
-        if (!NEYNAR_API_KEY) return;
+        if (!API_URL) return;
 
-        const response = await fetch(
-          `https://api.neynar.com/v2/farcaster/user/bulk-by-address?addresses=${address}`,
-          {
-            method: "GET",
-            headers: { accept: "application/json", api_key: NEYNAR_API_KEY },
-          }
-        );
+        const response = await fetch(`${API_URL}/api/farcaster/${address}`);
+
+        if (!response.ok) return;
 
         const data = await response.json();
-        const user = data[address.toLowerCase()]?.[0];
 
-        if (user) {
+        if (data.success && data.name) {
           setFarcasterProfile({
-            name: user.display_name || user.username,
-            avatar: user.pfp_url,
+            name: data.name,
+            avatar: data.avatar,
             source: "farcaster",
           });
         }
