@@ -515,10 +515,12 @@ export default function TouchGrass() {
   // --- Actions ---
   const updateChallengeStatus = async (id, status, extraData = {}) => {
     try {
-      await updateDoc(doc(db, "touchgrass_challenges", id), {
-        status,
-        ...extraData,
-      });
+      const updateData = { ...extraData };
+      // Only include status if it has a value (avoid sending undefined)
+      if (status) {
+        updateData.status = status;
+      }
+      await updateDoc(doc(db, "touchgrass_challenges", id), updateData);
     } catch (e) {
       showNotification(`${e}`, "error");
       console.error(e);
