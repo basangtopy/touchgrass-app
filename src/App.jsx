@@ -149,7 +149,9 @@ export default function TouchGrass() {
 
   // --- 1. Database Sync ---
   useEffect(() => {
-    signInAnonymously(auth);
+    signInAnonymously(auth).catch((error) => {
+      console.error("Firebase anonymous auth failed:", error);
+    });
     onAuthStateChanged(auth, setFirebaseUser);
   }, []);
 
@@ -344,7 +346,9 @@ export default function TouchGrass() {
 
       try {
         const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-        const filter = contract.filters.ChallengeCreated(null, walletAddress);
+        // Use original checksummed address from wagmi for event filtering
+        // (walletAddress is lowercased for DB queries, but events need checksummed addresses)
+        const filter = contract.filters.ChallengeCreated(null, address);
 
         // Query only recent blocks to avoid "exceeds max block range" RPC errors
         // Most RPC providers limit queries to ~100,000 blocks
@@ -429,8 +433,8 @@ export default function TouchGrass() {
               );
             }
           } catch (innerError) {
-            // Non-critical: individual challenge recovery failed, continue with others
-            console.debug("Challenge recovery skipped:", innerError.message);
+            // Log full error for debugging - recovery failures need visibility
+            console.error("Challenge recovery failed for event:", innerError);
           }
         }
       } catch (e) {
@@ -443,7 +447,14 @@ export default function TouchGrass() {
     if (walletConnected) reconcileChallenges();
     const interval = setInterval(reconcileChallenges, 30000);
     return () => clearInterval(interval);
-  }, [walletConnected, walletAddress, user, challenges.length, signer]);
+  }, [
+    walletConnected,
+    walletAddress,
+    user,
+    challenges.length,
+    signer,
+    address,
+  ]);
 
   // --- 5. Chain Sync ---
   useEffect(() => {
