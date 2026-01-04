@@ -353,7 +353,7 @@ export default function TouchGrass() {
         // Query only recent blocks to avoid "exceeds max block range" RPC errors
         // Most RPC providers limit queries to ~100,000 blocks
         const currentBlock = await signer.provider.getBlockNumber();
-        const fromBlock = Math.max(0, currentBlock - 99000); // ~99k blocks to stay under limit
+        const fromBlock = Math.max(0, currentBlock - 49000); // ~49k blocks to stay under limit
         const events = await contract.queryFilter(filter, fromBlock, "latest");
 
         for (const event of events) {
