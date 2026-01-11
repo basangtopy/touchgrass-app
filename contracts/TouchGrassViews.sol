@@ -213,7 +213,7 @@ contract TouchGrassViews {
     }
 
     /**
-     * @notice Check if any funds are recoverable
+     * @notice Check if any funds are recoverable across all supported tokens
      */
     function hasRecoverableFunds()
         external
@@ -230,10 +230,58 @@ contract TouchGrassViews {
         if (ethBalance > ethProtected) {
             canRecover = true;
             try touchGrass.getTokenPrice("ETH") returns (uint256 ethPrice) {
-                totalRecoverableUSD =
+                // ETH has 18 decimals, price is in 18 decimals
+                totalRecoverableUSD +=
                     ((ethBalance - ethProtected) * ethPrice) /
                     PRICE_PRECISION;
             } catch {}
+        }
+
+        // Check all ERC20 tokens
+        uint256 tokenIndex = 0;
+        while (true) {
+            try touchGrass.supportedTokenIds(tokenIndex) returns (
+                bytes32 tokenId
+            ) {
+                (
+                    bool isSupported,
+                    address tokenAddr,
+                    ,
+                    uint8 decimals,
+                    ,
+                    ,
+
+                ) = touchGrass.tokenConfigs(tokenId);
+
+                if (isSupported && tokenAddr != address(0)) {
+                    uint256 tokenBalance = IERC20(tokenAddr).balanceOf(
+                        address(touchGrass)
+                    );
+                    uint256 tokenLocked = touchGrass.totalLockedByToken(
+                        tokenId
+                    );
+                    uint256 tokenPending = touchGrass.totalPendingWithdrawals(
+                        tokenId
+                    );
+                    uint256 tokenProtected = tokenLocked + tokenPending;
+
+                    if (tokenBalance > tokenProtected) {
+                        canRecover = true;
+                        string memory symbol = touchGrass.tokenSymbols(tokenId);
+                        try touchGrass.getTokenPrice(symbol) returns (
+                            uint256 tokenPrice
+                        ) {
+                            // Normalize: (amount * price) / 10^decimals
+                            totalRecoverableUSD +=
+                                ((tokenBalance - tokenProtected) * tokenPrice) /
+                                (10 ** decimals);
+                        } catch {}
+                    }
+                }
+                tokenIndex++;
+            } catch {
+                break;
+            }
         }
     }
 
@@ -252,12 +300,64 @@ contract TouchGrassViews {
         uint256 ethPending = touchGrass.totalPendingWithdrawals(ethTokenId);
 
         try touchGrass.getTokenPrice("ETH") returns (uint256 ethPrice) {
-            summary.totalContractValueUSD =
+            summary.totalContractValueUSD +=
                 (ethBalance * ethPrice) /
                 PRICE_PRECISION;
-            summary.totalLockedUSD = (ethLocked * ethPrice) / PRICE_PRECISION;
-            summary.totalPendingUSD = (ethPending * ethPrice) / PRICE_PRECISION;
+            summary.totalLockedUSD += (ethLocked * ethPrice) / PRICE_PRECISION;
+            summary.totalPendingUSD +=
+                (ethPending * ethPrice) /
+                PRICE_PRECISION;
         } catch {}
+
+        // Iterate all ERC20 tokens
+        uint256 tokenIndex = 0;
+        while (true) {
+            try touchGrass.supportedTokenIds(tokenIndex) returns (
+                bytes32 tokenId
+            ) {
+                (
+                    bool isSupported,
+                    address tokenAddr,
+                    ,
+                    uint8 decimals,
+                    ,
+                    ,
+
+                ) = touchGrass.tokenConfigs(tokenId);
+
+                if (isSupported && tokenAddr != address(0)) {
+                    uint256 tokenBalance = IERC20(tokenAddr).balanceOf(
+                        address(touchGrass)
+                    );
+                    uint256 tokenLocked = touchGrass.totalLockedByToken(
+                        tokenId
+                    );
+                    uint256 tokenPending = touchGrass.totalPendingWithdrawals(
+                        tokenId
+                    );
+
+                    string memory symbol = touchGrass.tokenSymbols(tokenId);
+                    try touchGrass.getTokenPrice(symbol) returns (
+                        uint256 tokenPrice
+                    ) {
+                        // Normalize using token decimals
+                        uint256 decimalFactor = 10 ** decimals;
+                        summary.totalContractValueUSD +=
+                            (tokenBalance * tokenPrice) /
+                            decimalFactor;
+                        summary.totalLockedUSD +=
+                            (tokenLocked * tokenPrice) /
+                            decimalFactor;
+                        summary.totalPendingUSD +=
+                            (tokenPending * tokenPrice) /
+                            decimalFactor;
+                    } catch {}
+                }
+                tokenIndex++;
+            } catch {
+                break;
+            }
+        }
 
         summary.totalProtectedUSD =
             summary.totalLockedUSD +
