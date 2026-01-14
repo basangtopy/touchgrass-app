@@ -19,6 +19,11 @@ module.exports = {
       url: "https://sepolia.base.org",
       accounts: [process.env.PRIVATE_KEY],
     },
+    // Base Mainnet
+    base: {
+      url: "https://mainnet.base.org",
+      accounts: [process.env.PRIVATE_KEY],
+    },
     // Local Hardhat Network (for testing logic without spending real testnet ETH)
     hardhat: {
       chainId: 31337,
