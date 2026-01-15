@@ -8,6 +8,8 @@ import {
   trustWallet,
   rabbyWallet,
 } from "@rainbow-me/rainbowkit/wallets";
+// Note: @farcaster/miniapp-wagmi-connector removed due to version incompatibility
+// Mini app detection and features handled via useMiniApp hook instead
 import { createConfig, http } from "wagmi";
 import { base, baseSepolia, hardhat } from "wagmi/chains";
 
@@ -21,12 +23,13 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
 
 // Configure wallet connectors with injectedWallet first for in-app browser detection
 // injectedWallet catches ANY wallet's dApp browser (Trust, SafePal, Zerion, etc.)
+// In Base App/Farcaster context, injectedWallet will catch the injected wallet
 const connectors = connectorsForWallets(
   [
     {
       groupName: "Popular",
       wallets: [
-        injectedWallet, // Catches any in-app browser wallet
+        injectedWallet, // Catches any in-app browser wallet (including Base App)
         metaMaskWallet,
         baseAccount,
         walletConnectWallet,

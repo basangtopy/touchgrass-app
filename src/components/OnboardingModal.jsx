@@ -51,7 +51,7 @@ const steps = [
     icon: Trophy,
     title: "Ready to Prove Yourself?",
     description:
-      "Join thousands who've used TouchGrass to build better habits and achieve their goals.",
+      "Start your first challenge now on TouchGrass to build better habits and achieve your goals.",
     highlight: "Your first challenge awaits! 🚀",
   },
 ];

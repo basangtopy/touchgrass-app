@@ -24,6 +24,7 @@ import {
 
 // Custom Hooks
 import { useDraftChallenge } from "./hooks/useDraftChallenge";
+import { useMiniApp } from "./hooks/useMiniApp";
 
 import { auth, db } from "./firebase";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./data/contractConfig";
@@ -54,6 +55,9 @@ export default function TouchGrass() {
   // ROUTER HOOKS
   const navigate = useNavigate();
   const location = useLocation();
+
+  // MINI APP CONTEXT
+  const { isInMiniApp, share: miniAppShare, haptic } = useMiniApp();
 
   const setStep = (stepName) => {
     if (stepName === "home") navigate("/");
@@ -928,6 +932,8 @@ export default function TouchGrass() {
                     handleWithdraw={handleWithdraw}
                     setStep={setStep}
                     showNotification={showNotification}
+                    miniAppShare={miniAppShare}
+                    isInMiniApp={isInMiniApp}
                   />
                 }
               />
@@ -942,6 +948,8 @@ export default function TouchGrass() {
                     markAsWithdrawn={handleWithdraw}
                     setStep={setStep}
                     showNotification={showNotification}
+                    miniAppShare={miniAppShare}
+                    isInMiniApp={isInMiniApp}
                   />
                 }
               />

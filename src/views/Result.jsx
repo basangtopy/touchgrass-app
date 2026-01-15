@@ -26,6 +26,8 @@ export default function Result({
   markAsWithdrawn,
   setStep,
   showNotification,
+  miniAppShare,
+  isInMiniApp,
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -85,7 +87,9 @@ export default function Result({
       "sharecard",
       "My TouchGrass Challenge Result",
       `I just finished my "${activeChallenge.title}" challenge on TouchGrass. Check out my result!`,
-      showNotification
+      showNotification,
+      "touchgrass_result.png",
+      miniAppShare
     );
   };
 
@@ -242,7 +246,8 @@ export default function Result({
 
       <div className="w-full flex-shrink-0 grid grid-cols-2 gap-3 no-share">
         <Button variant="secondary" onClick={shareResult} className="text-xs">
-          <Share2 size={14} className="mr-1" /> Brag About It 📣
+          <Share2 size={14} className="mr-1" />{" "}
+          {isInMiniApp ? "Cast It! 📣" : "Brag About It 📣"}
         </Button>
         <Button
           variant="outline"

@@ -1,0 +1,38 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "TouchGrass",
+    "homeUrl": "https://touchgrassapp.netlify.app",
+    "iconUrl": "https://touchgrassapp.netlify.app/icon.png",
+    "splashImageUrl": "https://touchgrassapp.netlify.app/splash.png",
+    "splashBackgroundColor": "#0F172A",
+    "subtitle": "Commit to yourself, stake your way",
+    "description": "Create accountability challenges with crypto stakes. Set a goal, lock your funds, verify with AI, and earn it back when you succeed.",
+    "screenshotUrls": [
+      "https://touchgrassapp.netlify.app/tg-screenshot1.png",
+      "https://touchgrassapp.netlify.app/tg-screenshot2.png",
+      "https://touchgrassapp.netlify.app/tg-screenshot3.png",
+      "https://touchgrassapp.netlify.app/tg-screenshot4.png"
+    ],
+    "primaryCategory": "lifestyle",
+    "tags": [
+      "accountability",
+      "staking",
+      "challenges",
+      "fitness",
+      "habits",
+      "web3"
+    ],
+    "heroImageUrl": "https://touchgrassapp.netlify.app/hero.png",
+    "tagline": "Stake your commitment",
+    "ogTitle": "TouchGrass - Stake Your Goals",
+    "ogDescription": "Put your money where your motivation is",
+    "ogImageUrl": "https://touchgrassapp.netlify.app/og.png",
+    "noindex": false
+  }
+}

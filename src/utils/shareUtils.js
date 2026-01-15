@@ -6,7 +6,9 @@ import { toBlob } from "html-to-image";
  * @param {string} elementId - The ID of the DOM element to capture.
  * @param {string} title - The title for the share dialog.
  * @param {string} text - The text body for the share.
+ * @param {Function} notify - Notification callback function.
  * @param {string} fileName - The filename for the image (used in fallback download).
+ * @param {Function} miniAppShare - Optional Farcaster share function from useMiniApp hook.
  */
 
 export const handleShare = async (
@@ -14,7 +16,8 @@ export const handleShare = async (
   title,
   text,
   notify,
-  fileName = "touchgrass_result.png"
+  fileName = "touchgrass_result.png",
+  miniAppShare = null
 ) => {
   const element = document.getElementById(elementId);
 
@@ -38,9 +41,22 @@ export const handleShare = async (
       throw new Error("Failed to generate image blob");
     }
 
+    // 2. Try Farcaster compose cast first if in mini app context
+    if (miniAppShare) {
+      const shareUrl = window.location.href;
+      const result = await miniAppShare(text, shareUrl);
+      if (result.success) {
+        notify(
+          result.method === "farcaster" ? "Cast composed! 📣" : "Shared!",
+          "success"
+        );
+        return;
+      }
+    }
+
     const file = new File([blob], fileName, { type: "image/png" });
 
-    // 2. Use Web Share API if available and supports files
+    // 3. Use Web Share API if available and supports files
     if (
       navigator.share &&
       navigator.canShare &&
@@ -58,17 +74,14 @@ export const handleShare = async (
         notify(`Share cancelled or failed: ${shareError}`, "error");
       }
     } else {
-      // 3. Fallback: Download the image
+      // 4. Fallback: Download the image
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      notify(
-        "Web Share API not supported or failed, downloaded image instead.",
-        "error"
-      );
+      notify("Downloaded image – share it anywhere!", "success");
     }
   } catch (error) {
     console.error("Error sharing:", error);
