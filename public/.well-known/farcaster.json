@@ -1,38 +1,35 @@
 {
   "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
+    "header": "eyJmaWQiOi0xLCJ0eXBlIjoiYXV0aCIsImtleSI6IjB4YWFiYTBBNDlkMTc4ZTljQjUzMDY4RjJERjEwQTk2MUIyMjJBZjQzYyJ9",
+    "payload": "eyJkb21haW4iOiJ0b3VjaGdyYXNzYXBwLm5ldGxpZnkuYXBwIn0",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB7dci-7UdJYHi-ZSvubd5_0GYHNliggx4Dg06FgZ6qURm7qyL6fV1-D6z_u0tBgiHMtc4Xrsoj9qfuh2wfo63BQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAl8ZgIay2xclZzG8RWZzuWvO8j9R0fus3XxDee9lRlVy8dAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD3eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiaGpVUzl1VVZCR19DdTVCb0puWm9kVWpseHRobXFDZjdwdjlTckR4QnZMWSIsIm9yaWdpbiI6Imh0dHBzOi8va2V5cy5jb2luYmFzZS5jb20iLCJjcm9zc09yaWdpbiI6ZmFsc2UsIm90aGVyX2tleXNfY2FuX2JlX2FkZGVkX2hlcmUiOiJkbyBub3QgY29tcGFyZSBjbGllbnREYXRhSlNPTiBhZ2FpbnN0IGEgdGVtcGxhdGUuIFNlZSBodHRwczovL2dvby5nbC95YWJQZXgifQAAAAAAAAAAAA"
   },
   "miniapp": {
     "version": "1",
     "name": "TouchGrass",
     "homeUrl": "https://touchgrassapp.netlify.app",
-    "iconUrl": "https://touchgrassapp.netlify.app/icon.png",
-    "splashImageUrl": "https://touchgrassapp.netlify.app/splash.png",
+    "iconUrl": "https://touchgrassapp.netlify.app/icon-miniapp.png",
+    "splashImageUrl": "https://touchgrassapp.netlify.app/splash-miniapp.png",
     "splashBackgroundColor": "#0F172A",
-    "subtitle": "Commit to yourself, stake your way",
+    "subtitle": "Stake and commit to yourself",
     "description": "Create accountability challenges with crypto stakes. Set a goal, lock your funds, verify with AI, and earn it back when you succeed.",
     "screenshotUrls": [
       "https://touchgrassapp.netlify.app/tg-screenshot1.png",
       "https://touchgrassapp.netlify.app/tg-screenshot2.png",
-      "https://touchgrassapp.netlify.app/tg-screenshot3.png",
       "https://touchgrassapp.netlify.app/tg-screenshot4.png"
     ],
-    "primaryCategory": "lifestyle",
+    "primaryCategory": "productivity",
     "tags": [
       "accountability",
-      "staking",
+      "productivity",
       "challenges",
       "fitness",
-      "habits",
-      "web3"
+      "habits"
     ],
     "heroImageUrl": "https://touchgrassapp.netlify.app/hero.png",
     "tagline": "Stake your commitment",
     "ogTitle": "TouchGrass - Stake Your Goals",
     "ogDescription": "Put your money where your motivation is",
-    "ogImageUrl": "https://touchgrassapp.netlify.app/og.png",
-    "noindex": false
+    "ogImageUrl": "https://touchgrassapp.netlify.app/og.png"
   }
 }
