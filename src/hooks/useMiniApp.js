@@ -62,14 +62,41 @@ export function useMiniApp() {
     }
   }, [isInMiniApp, isConnected, connect, connectors]);
 
-  // Farcaster compose cast with fallback
+  // Farcaster compose cast with optional image upload
   const share = useCallback(
-    async (text, url) => {
+    async (text, url, imageBlob = null) => {
       if (isInMiniApp) {
         try {
+          const embeds = [];
+
+          // Upload image first if provided
+          if (imageBlob) {
+            try {
+              const { uploadImageToCloudinary, isCloudinaryConfigured } =
+                await import("../utils/imageUpload");
+
+              if (isCloudinaryConfigured()) {
+                const imageUrl = await uploadImageToCloudinary(imageBlob);
+                embeds.push({ url: imageUrl });
+              } else {
+                console.warn("Cloudinary not configured, skipping image embed");
+              }
+            } catch (uploadError) {
+              console.warn(
+                "Image upload failed, continuing without image:",
+                uploadError
+              );
+            }
+          }
+
+          // Add app URL as fallback/additional embed
+          if (url) {
+            embeds.push({ url });
+          }
+
           await sdk.actions.composeCast({
             text,
-            embeds: url ? [{ url }] : [],
+            embeds: embeds.length > 0 ? embeds : undefined,
           });
           return { success: true, method: "farcaster" };
         } catch (e) {

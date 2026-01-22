@@ -44,12 +44,10 @@ export const handleShare = async (
     // 2. Try Farcaster compose cast first if in mini app context
     if (miniAppShare) {
       const shareUrl = window.location.href;
-      const result = await miniAppShare(text, shareUrl);
+      // Pass blob so it can be uploaded and embedded in the cast
+      const result = await miniAppShare(text, shareUrl, blob);
       if (result.success) {
-        notify(
-          result.method === "farcaster" ? "Cast composed! 📣" : "Shared!",
-          "success"
-        );
+        notify("Cast composed! 📣", "success");
         return;
       }
     }
