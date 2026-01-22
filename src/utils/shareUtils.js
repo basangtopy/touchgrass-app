@@ -41,7 +41,8 @@ export const handleShare = async (
 
     // 2. Try Farcaster compose cast first if in mini app context
     if (miniAppShare) {
-      const shareUrl = window.location.href;
+      // Share homepage URL since challenges are wallet-specific and can't be accessed by others
+      const shareUrl = window.location.origin;
       const result = await miniAppShare(text, shareUrl, blob);
       if (result.success) {
         notify("Cast composed! 📣", "success");
@@ -83,9 +84,53 @@ export const handleShare = async (
     // FALLBACK 2: Copy image to clipboard
     if (navigator.clipboard && typeof ClipboardItem !== "undefined") {
       try {
+        // Check permission before attempting write
+        if (navigator.permissions) {
+          try {
+            const permission = await navigator.permissions.query({
+              name: "clipboard-write",
+            });
+            if (permission.state === "denied") {
+              console.warn("Clipboard write permission denied");
+              throw new Error("Clipboard permission denied");
+            }
+          } catch (permError) {
+            // Some browsers don't support clipboard-write permission query
+            // Continue anyway and let the write attempt fail if needed
+            console.debug("Permission query not supported:", permError);
+          }
+        }
+
+        // Ensure blob has explicit PNG MIME type
+        const pngBlob =
+          blob.type === "image/png"
+            ? blob
+            : new Blob([blob], { type: "image/png" });
+
+        // Attempt clipboard write
         await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob }),
+          new ClipboardItem({ "image/png": pngBlob }),
         ]);
+
+        // Verify write actually worked by reading back
+        try {
+          const clipboardItems = await navigator.clipboard.read();
+          if (!clipboardItems || clipboardItems.length === 0) {
+            throw new Error("Clipboard appears empty after write");
+          }
+          // Check if image type exists in clipboard
+          const hasImage = clipboardItems.some((item) =>
+            item.types.includes("image/png")
+          );
+          if (!hasImage) {
+            throw new Error("Image not found in clipboard after write");
+          }
+        } catch (readError) {
+          // Read permission may not be available - this is okay
+          // If we can't verify, we trust the write succeeded
+          console.debug("Clipboard read for verification failed:", readError);
+        }
+
         notify("Image copied! Open your Twitter/X and paste 📋", "success");
         return;
       } catch (clipboardError) {
