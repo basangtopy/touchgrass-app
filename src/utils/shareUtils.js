@@ -1,16 +1,16 @@
 import { toBlob } from "html-to-image";
+
 /**
- * Captures a DOM element as an image and shares it using the Web Share API.
- * Falls back to downloading the image if sharing is not supported.
+ * Captures a DOM element as an image and shares it using multiple fallback methods.
+ * Fallback order: Farcaster Cast → Web Share API → Clipboard → Download
  *
  * @param {string} elementId - The ID of the DOM element to capture.
  * @param {string} title - The title for the share dialog.
  * @param {string} text - The text body for the share.
  * @param {Function} notify - Notification callback function.
- * @param {string} fileName - The filename for the image (used in fallback download).
+ * @param {string} fileName - The filename for the image.
  * @param {Function} miniAppShare - Optional Farcaster share function from useMiniApp hook.
  */
-
 export const handleShare = async (
   elementId,
   title,
@@ -29,11 +29,9 @@ export const handleShare = async (
   try {
     // 1. Convert DOM to Blob (PNG)
     const blob = await toBlob(element, {
-      backgroundColor: "#020617", // Match app background (slate-950) to avoid transparency issues
+      backgroundColor: "#020617",
       pixelRatio: 2,
-      style: {
-        borderRadius: "3rem",
-      }, // Optional: reset border radius if needed for capture
+      style: { borderRadius: "3rem" },
       filter: (node) => !node.classList?.contains("no-share"),
     });
 
@@ -44,7 +42,6 @@ export const handleShare = async (
     // 2. Try Farcaster compose cast first if in mini app context
     if (miniAppShare) {
       const shareUrl = window.location.href;
-      // Pass blob so it can be uploaded and embedded in the cast
       const result = await miniAppShare(text, shareUrl, blob);
       if (result.success) {
         notify("Cast composed! 📣", "success");
@@ -54,7 +51,11 @@ export const handleShare = async (
 
     const file = new File([blob], fileName, { type: "image/png" });
 
-    // 3. Use Web Share API if available and supports files
+    // ============================================
+    // FALLBACK CHAIN (in order of preference)
+    // ============================================
+
+    // FALLBACK 1: Web Share API with file support (best UX on mobile)
     if (
       navigator.share &&
       navigator.canShare &&
@@ -67,24 +68,48 @@ export const handleShare = async (
           files: [file],
         });
         notify("Shared successfully!", "success");
+        return;
       } catch (shareError) {
-        // If user cancels share, it throws an error. We catch it here.
-        notify(`Share cancelled or failed: ${shareError}`, "error");
+        // User cancelled - not a real failure
+        if (shareError.name === "AbortError") {
+          notify("Share cancelled", "info");
+          return;
+        }
+        console.warn("Web Share failed:", shareError);
+        // Continue to next fallback
       }
-    } else {
-      // 4. Fallback: Download the image
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      notify("Downloaded image – share it anywhere!", "success");
     }
+
+    // FALLBACK 2: Copy image to clipboard
+    if (navigator.clipboard && typeof ClipboardItem !== "undefined") {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob }),
+        ]);
+        notify("Image copied! Open your Twitter/X and paste 📋", "success");
+        return;
+      } catch (clipboardError) {
+        console.warn("Clipboard write failed:", clipboardError);
+        // Continue to next fallback
+      }
+    }
+
+    // FALLBACK 3: Programmatic download (final fallback)
+    const link = document.createElement("a");
+    const blobUrl = URL.createObjectURL(blob);
+    link.href = blobUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up the object URL after a short delay to prevent memory leak
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+    notify("Image downloaded – share it anywhere! 📥", "success");
   } catch (error) {
     console.error("Error sharing:", error);
-    // You might want to throw this error up to the UI to show a notification
-    notify(`${error}`, "error");
+    notify(`Share failed: ${error.message}`, "error");
     throw error;
   }
 };

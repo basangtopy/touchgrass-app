@@ -77,7 +77,7 @@ export function useMiniApp() {
 
               if (isCloudinaryConfigured()) {
                 const imageUrl = await uploadImageToCloudinary(imageBlob);
-                embeds.push({ url: imageUrl });
+                embeds.push(imageUrl);
               } else {
                 console.warn("Cloudinary not configured, skipping image embed");
               }
@@ -91,7 +91,7 @@ export function useMiniApp() {
 
           // Add app URL as fallback/additional embed
           if (url) {
-            embeds.push({ url });
+            embeds.push(url);
           }
 
           await sdk.actions.composeCast({
