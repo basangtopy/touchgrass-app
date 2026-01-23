@@ -2,7 +2,7 @@ import { toBlob } from "html-to-image";
 
 /**
  * Captures a DOM element as an image and shares it using multiple fallback methods.
- * Fallback order: Farcaster Cast → Web Share API → Clipboard → Download
+ * Fallback order: Farcaster Cast → Web Share API → Download
  *
  * @param {string} elementId - The ID of the DOM element to capture.
  * @param {string} title - The title for the share dialog.
@@ -81,65 +81,7 @@ export const handleShare = async (
       }
     }
 
-    // FALLBACK 2: Copy image to clipboard
-    if (navigator.clipboard && typeof ClipboardItem !== "undefined") {
-      try {
-        // Check permission before attempting write
-        if (navigator.permissions) {
-          try {
-            const permission = await navigator.permissions.query({
-              name: "clipboard-write",
-            });
-            if (permission.state === "denied") {
-              console.warn("Clipboard write permission denied");
-              throw new Error("Clipboard permission denied");
-            }
-          } catch (permError) {
-            // Some browsers don't support clipboard-write permission query
-            // Continue anyway and let the write attempt fail if needed
-            console.debug("Permission query not supported:", permError);
-          }
-        }
-
-        // Ensure blob has explicit PNG MIME type
-        const pngBlob =
-          blob.type === "image/png"
-            ? blob
-            : new Blob([blob], { type: "image/png" });
-
-        // Attempt clipboard write
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": pngBlob }),
-        ]);
-
-        // Verify write actually worked by reading back
-        try {
-          const clipboardItems = await navigator.clipboard.read();
-          if (!clipboardItems || clipboardItems.length === 0) {
-            throw new Error("Clipboard appears empty after write");
-          }
-          // Check if image type exists in clipboard
-          const hasImage = clipboardItems.some((item) =>
-            item.types.includes("image/png")
-          );
-          if (!hasImage) {
-            throw new Error("Image not found in clipboard after write");
-          }
-        } catch (readError) {
-          // Read permission may not be available - this is okay
-          // If we can't verify, we trust the write succeeded
-          console.debug("Clipboard read for verification failed:", readError);
-        }
-
-        notify("Image copied! Open your Twitter/X and paste 📋", "success");
-        return;
-      } catch (clipboardError) {
-        console.warn("Clipboard write failed:", clipboardError);
-        // Continue to next fallback
-      }
-    }
-
-    // FALLBACK 3: Programmatic download (final fallback)
+    // FALLBACK 2: Programmatic download (final fallback)
     const link = document.createElement("a");
     const blobUrl = URL.createObjectURL(blob);
     link.href = blobUrl;
