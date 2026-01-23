@@ -56,6 +56,10 @@ export const handleShare = async (
     // FALLBACK CHAIN (in order of preference)
     // ============================================
 
+    // Build share text with CTA and URL
+    const shareUrl = window.location.origin;
+    const shareText = `${text}\n\n👉 Start your own challenge: ${shareUrl}`;
+
     // FALLBACK 1: Web Share API with file support (best UX on mobile)
     if (
       navigator.share &&
@@ -65,7 +69,7 @@ export const handleShare = async (
       try {
         await navigator.share({
           title: title,
-          text: text,
+          text: shareText,
           files: [file],
         });
         notify("Shared successfully!", "success");

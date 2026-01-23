@@ -67,7 +67,7 @@ export function useMiniApp() {
     async (text, url, imageBlob = null) => {
       if (isInMiniApp) {
         try {
-          const embeds = [];
+          let imageUrl = null;
 
           // Upload image first if provided
           if (imageBlob) {
@@ -76,8 +76,7 @@ export function useMiniApp() {
                 await import("../utils/imageUpload");
 
               if (isCloudinaryConfigured()) {
-                const imageUrl = await uploadImageToCloudinary(imageBlob);
-                embeds.push(imageUrl);
+                imageUrl = await uploadImageToCloudinary(imageBlob);
               } else {
                 console.warn("Cloudinary not configured, skipping image embed");
               }
@@ -89,14 +88,15 @@ export function useMiniApp() {
             }
           }
 
-          // Add app URL as fallback/additional embed
-          if (url) {
-            embeds.push(url);
-          }
+          // Build cast text with CTA and URL (URL in text, not as embed)
+          const castText = url
+            ? `${text}\n\n👉 Start your own challenge: ${url}`
+            : text;
 
           await sdk.actions.composeCast({
-            text,
-            embeds: embeds.length > 0 ? embeds : undefined,
+            text: castText,
+            // Only embed the image to prevent OG image from taking over
+            embeds: imageUrl ? [imageUrl] : undefined,
           });
           return { success: true, method: "farcaster" };
         } catch (e) {
