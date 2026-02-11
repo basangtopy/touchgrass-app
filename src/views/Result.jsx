@@ -33,6 +33,15 @@ export default function Result({
   const navigate = useNavigate();
   const activeChallenge = challenges.find((c) => c.id === id);
 
+  // Redirect pending/failed challenges to dashboard
+  if (
+    activeChallenge?.status === "pending" ||
+    activeChallenge?.status === "failed"
+  ) {
+    navigate("/");
+    return null;
+  }
+
   const [donationTarget, setDonationTarget] = useState("charity"); // 'charity' or 'dev'
   const [isMinting, setIsMinting] = useState(false);
 
@@ -73,7 +82,7 @@ export default function Result({
     activeChallenge.completedAt && activeChallenge.createdAt
       ? formatTimeRemaining(
           activeChallenge.completedAt,
-          activeChallenge.createdAt
+          activeChallenge.createdAt,
         ).replace("00d ", "")
       : "N/A";
 
@@ -89,7 +98,7 @@ export default function Result({
       `I just finished my "${activeChallenge.title}" challenge on TouchGrass. Check out my result!`,
       showNotification,
       "touchgrass_result.png",
-      miniAppShare
+      miniAppShare,
     );
   };
 

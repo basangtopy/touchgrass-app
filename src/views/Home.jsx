@@ -22,11 +22,21 @@ export default function Home({
   claimPendingWithdrawal,
   isProcessing,
 }) {
+  // Exclude pending/failed challenges from all standard lists
+  const isVisible = (c) => c.status !== "pending" && c.status !== "failed";
+
+  const pendingList = challenges.filter((c) => c.status === "pending");
+
   const ongoingList = challenges.filter(
-    (c) => !c.isSuccess && !c.isWithdrawn && currentTime <= c.targetTime
+    (c) =>
+      isVisible(c) &&
+      !c.isSuccess &&
+      !c.isWithdrawn &&
+      currentTime <= c.targetTime,
   );
 
   const actionList = challenges.filter((c) => {
+    if (!isVisible(c)) return false;
     if (c.isWithdrawn) return false;
     if (c.isSuccess) return true;
     if (currentTime > c.targetTime) return true;
@@ -34,7 +44,7 @@ export default function Home({
   });
 
   const pastList = challenges
-    .filter((c) => c.isWithdrawn)
+    .filter((c) => isVisible(c) && c.isWithdrawn)
     .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
 
   // Get the most recent successful challenge
@@ -42,7 +52,7 @@ export default function Home({
 
   // Find if any challenge is urgent (less than 1 hour remaining)
   const urgentChallenge = ongoingList.find(
-    (c) => c.targetTime - currentTime < 3600000 && c.targetTime > currentTime
+    (c) => c.targetTime - currentTime < 3600000 && c.targetTime > currentTime,
   );
 
   // Generate contextual, personalized message
@@ -181,6 +191,31 @@ export default function Home({
               </div>
             )}
 
+          {/* Pending challenges - confirming on blockchain */}
+          {pendingList.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-blue-300 text-xs font-bold uppercase tracking-wider text-left ml-1">
+                ⏳ Confirming...
+              </h3>
+              {pendingList.map((c) => (
+                <div
+                  key={c.id}
+                  className="w-full bg-blue-900/10 border border-blue-500/20 p-4 rounded-2xl flex items-center gap-3 animate-pulse cursor-default"
+                >
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="text-left">
+                    <div className="text-white/80 font-bold text-sm">
+                      {c.title}
+                    </div>
+                    <div className="text-xs font-mono text-blue-400/60">
+                      Confirming on blockchain...
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {actionList.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-rose-400 text-xs font-bold uppercase tracking-wider text-left ml-1 flex items-center gap-1">
@@ -200,7 +235,7 @@ export default function Home({
                   if (remaining > 0) {
                     statusText = `Locked (${formatTimeRemaining(
                       unlockTime,
-                      currentTime
+                      currentTime,
                     )})`;
                     statusColor = "text-yellow-400";
                   } else {

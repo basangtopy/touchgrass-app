@@ -31,6 +31,15 @@ export default function Lost({
   const navigate = useNavigate();
   const activeChallenge = challenges.find((c) => c.id === id);
 
+  // Redirect pending/failed challenges to dashboard
+  if (
+    activeChallenge?.status === "pending" ||
+    activeChallenge?.status === "failed"
+  ) {
+    navigate("/");
+    return null;
+  }
+
   // Handle redirects in useEffect to avoid side effects during render
   const isOngoing = activeChallenge
     ? currentTime < activeChallenge.targetTime && !activeChallenge.completedAt
@@ -129,7 +138,7 @@ export default function Lost({
       `I just finished my "${activeChallenge.title}" challenge on TouchGrass. Check out my result!`,
       showNotification,
       "touchgrass_result.png",
-      miniAppShare
+      miniAppShare,
     );
   };
 
@@ -168,11 +177,25 @@ export default function Lost({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-300">Penalty</span>
-            <span className="text-rose-400 uppercase text-xs">
+            <span
+              className={`${
+                activeChallenge.penaltyType === "lock"
+                  ? "text-yellow-500"
+                  : "text-rose-400"
+              } uppercase text-xs`}
+            >
               {activeChallenge.penaltyType} ({activeChallenge.penaltyPercent}
               %)
             </span>
           </div>
+          {activeChallenge.penaltyType === "lock" && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-300">Locked Amount</span>
+              <span className="text-yellow-500 font-bold">
+                {activeChallenge.stakeAmount} {token}
+              </span>
+            </div>
+          )}
 
           {activeChallenge.penaltyType !== "lock" && (
             <>

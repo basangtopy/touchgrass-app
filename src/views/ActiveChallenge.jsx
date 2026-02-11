@@ -75,6 +75,15 @@ export default function ActiveChallenge({
   const navigate = useNavigate();
   const activeChallenge = challenges.find((c) => c.id === id);
 
+  // Redirect pending/failed challenges to dashboard
+  if (
+    activeChallenge?.status === "pending" ||
+    activeChallenge?.status === "failed"
+  ) {
+    navigate("/");
+    return null;
+  }
+
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [showEndTime, setShowEndTime] = useState(false); // Toggle for timer tap
@@ -125,7 +134,7 @@ export default function ActiveChallenge({
   const timeElapsed = currentTime - activeChallenge.createdAt;
   const progressPercent = Math.min(
     100,
-    Math.max(0, (timeElapsed / totalDuration) * 100)
+    Math.max(0, (timeElapsed / totalDuration) * 100),
   );
 
   // Urgency levels
@@ -295,11 +304,11 @@ export default function ActiveChallenge({
                 {isSuccessful
                   ? formatTimeRemaining(
                       activeChallenge.completedAt,
-                      currentTime
+                      currentTime,
                     )
                   : formatTimeRemaining(
                       activeChallenge.targetTime,
-                      currentTime
+                      currentTime,
                     )}
               </span>
             )}

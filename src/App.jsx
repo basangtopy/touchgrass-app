@@ -28,6 +28,7 @@ import { useMiniApp } from "./hooks/useMiniApp";
 
 import { auth, db } from "./firebase";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./data/contractConfig";
+import { getReadProvider, getReadContract } from "./utils/readProvider";
 import {
   ERC20_ABI,
   getTokenConfig,
@@ -113,7 +114,7 @@ export default function TouchGrass() {
   const [tokenFee, setTokenFee] = useState("0");
   const [tokenMinStake, setTokenMinStake] = useState("0");
   const [supportedTokens, setSupportedTokens] = useState(
-    getKnownTokenSymbols()
+    getKnownTokenSymbols(),
   );
 
   // Pending withdrawals from failed transfers
@@ -166,7 +167,7 @@ export default function TouchGrass() {
     }
     const q = query(
       collection(db, "touchgrass_challenges"),
-      where("walletAddress", "==", walletAddress.toLowerCase())
+      where("walletAddress", "==", walletAddress.toLowerCase()),
     );
     setChallengesLoading(true);
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -234,7 +235,7 @@ export default function TouchGrass() {
         const tokenContract = new Contract(
           tokenConfig.address,
           ERC20_ABI,
-          signer
+          signer,
         );
         try {
           const bal = await tokenContract.balanceOf(walletAddress);
@@ -242,7 +243,7 @@ export default function TouchGrass() {
         } catch (e) {
           showNotification(
             `${draftToken} not available on this network`,
-            "error"
+            "error",
           );
           setWalletBalance("0.00");
         }
@@ -271,7 +272,7 @@ export default function TouchGrass() {
       const [symbols, amounts] = await contract.getAllPendingWithdrawals(
         walletAddress,
         0,
-        10
+        10,
       );
 
       const pending = {};
@@ -313,7 +314,7 @@ export default function TouchGrass() {
 
       showNotification(
         `Successfully claimed your ${tokenSymbol}! 💰`,
-        "success"
+        "success",
       );
       // Refresh pending withdrawals and balance
       await checkPendingWithdrawals();
@@ -327,7 +328,7 @@ export default function TouchGrass() {
       } else {
         showNotification(
           error.reason || "Failed to claim funds – please try again",
-          "error"
+          "error",
         );
       }
     } finally {
@@ -348,102 +349,175 @@ export default function TouchGrass() {
         return;
       isReconciling.current = true;
 
+      // Safety timeout: reset flag after 30s to prevent deadlocks
+      const safetyTimeout = setTimeout(() => {
+        isReconciling.current = false;
+      }, 30000);
+
       try {
-        const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        // Use dedicated read-only provider if available, fall back to signer
+        const readContract = getReadContract();
+        const readProv = getReadProvider();
+        const contractForQuery =
+          readContract || new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        const providerForQuery = readProv || signer.provider;
+
         // Use original checksummed address from wagmi for event filtering
         // (walletAddress is lowercased for DB queries, but events need checksummed addresses)
-        const filter = contract.filters.ChallengeCreated(null, address);
+        const filter = contractForQuery.filters.ChallengeCreated(null, address);
 
         // Query only recent blocks to avoid "exceeds max block range" RPC errors
-        // Most RPC providers limit queries to ~100,000 blocks
-        const currentBlock = await signer.provider.getBlockNumber();
-        const fromBlock = Math.max(0, currentBlock - 49000); // ~49k blocks to stay under limit
-        const events = await contract.queryFilter(filter, fromBlock, "latest");
+        const currentBlock = await providerForQuery.getBlockNumber();
+        const fromBlock = Math.max(0, currentBlock - 49000);
+
+        // Retry logic for queryFilter (2 retries, 2s delay)
+        let events = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            events = await contractForQuery.queryFilter(
+              filter,
+              fromBlock,
+              "latest",
+            );
+            break;
+          } catch (e) {
+            if (attempt === 2) throw e;
+            await new Promise((r) => setTimeout(r, 2000));
+          }
+        }
 
         for (const event of events) {
           try {
             const onChainId = event.args[0].toString();
+            const eventTxHash = event.transactionHash;
+
+            // Check 1: Already exists as active challenge?
             let exists = challenges.some((c) => c.onChainId === onChainId);
 
             if (!exists) {
               const q = query(
                 collection(db, "touchgrass_challenges"),
-                where("onChainId", "==", onChainId)
+                where("onChainId", "==", onChainId),
               );
               const querySnapshot = await getDocs(q);
               if (!querySnapshot.empty) exists = true;
             }
 
-            if (!exists) {
-              console.debug(
-                `Found orphaned challenge #${onChainId}, attempting recovery...`
+            if (exists) continue;
+
+            // Check 2: Pending challenge with matching txHash? Promote it.
+            const pendingMatch = challenges.find(
+              (c) => c.status === "pending" && c.creationTxHash === eventTxHash,
+            );
+
+            if (pendingMatch) {
+              await updateDoc(
+                doc(db, "touchgrass_challenges", pendingMatch.id),
+                {
+                  status: "active",
+                  onChainId,
+                },
               );
-              const c = await contract.challenges(onChainId);
-
-              // Extract struct fields with fallback indices matching TouchGrass.sol Challenge struct
-              // Struct order: staker[0], penaltyPercent[1], penaltyType[2], isSuccess[3], isWithdrawn[4],
-              //               lockMultiplierSnapshot[5], gracePeriodSnapshot[6], tokenId[7], stakeAmount[8],
-              //               duration[9], startTime[10]
-              const tokenId = c.tokenId !== undefined ? c.tokenId : c[7];
-              const duration = c.duration !== undefined ? c.duration : c[9];
-              const chainStartTime =
-                c.startTime !== undefined ? c.startTime : c[10];
-              const stakeAmount =
-                c.stakeAmount !== undefined ? c.stakeAmount : c[8];
-              const penaltyType =
-                c.penaltyType !== undefined ? c.penaltyType : c[2];
-              const penaltyPercent =
-                c.penaltyPercent !== undefined ? c.penaltyPercent : c[1];
-              const isSuccess = c.isSuccess !== undefined ? c.isSuccess : c[3];
-              const isWithdrawn =
-                c.isWithdrawn !== undefined ? c.isWithdrawn : c[4];
-
-              // Reverse-lookup token symbol from tokenId using contract's tokenSymbols mapping
-              const tokenSymbol = await contract.tokenSymbols(tokenId);
-              const decimals = getTokenDecimals(tokenSymbol);
-
-              const durationMs = Number(duration) * 1000;
-              const startTime = Number(chainStartTime) * 1000;
-              const targetTime = startTime + durationMs;
-
-              const recoveredChallenge = {
-                walletAddress: walletAddress.toLowerCase(),
-                onChainId: onChainId,
-                title: `Recovered Challenge #${onChainId}`,
-                targetTime: targetTime,
-                durationValue: Number(duration) / 3600,
-                durationUnit: "hours",
-                stakeAmount: formatUnits(stakeAmount, decimals),
-                token: tokenSymbol,
-                tokenDecimals: decimals,
-                penaltyType: ["charity", "dev", "lock", "burn"][
-                  Number(penaltyType)
-                ],
-                penaltyPercent: Number(penaltyPercent),
-                isSuccess: isSuccess,
-                isWithdrawn: isWithdrawn,
-                creationTxHash: event.transactionHash,
-                createdAt: startTime,
-                status: "active",
-              };
-
-              await addDoc(
-                collection(db, "touchgrass_challenges"),
-                recoveredChallenge
-              );
-              showNotification(
-                `Recovered missing challenge #${onChainId}`,
-                "success"
-              );
+              showNotification("Challenge synced successfully!", "success");
+              continue;
             }
+
+            // Check 3: Truly orphaned — create recovered challenge
+            console.debug(
+              `Found orphaned challenge #${onChainId}, attempting recovery...`,
+            );
+
+            // Use signer-based contract for on-chain reads if no dedicated provider
+            const contractForRead =
+              readContract ||
+              new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            const c = await contractForRead.challenges(onChainId);
+
+            // Extract struct fields with fallback indices matching TouchGrass.sol Challenge struct
+            // Struct order: staker[0], penaltyPercent[1], penaltyType[2], isSuccess[3], isWithdrawn[4],
+            //               lockMultiplierSnapshot[5], gracePeriodSnapshot[6], tokenId[7], stakeAmount[8],
+            //               duration[9], startTime[10]
+            const tokenId = c.tokenId !== undefined ? c.tokenId : c[7];
+            const duration = c.duration !== undefined ? c.duration : c[9];
+            const chainStartTime =
+              c.startTime !== undefined ? c.startTime : c[10];
+            const stakeAmount =
+              c.stakeAmount !== undefined ? c.stakeAmount : c[8];
+            const penaltyType =
+              c.penaltyType !== undefined ? c.penaltyType : c[2];
+            const penaltyPercent =
+              c.penaltyPercent !== undefined ? c.penaltyPercent : c[1];
+            const isSuccess = c.isSuccess !== undefined ? c.isSuccess : c[3];
+            const isWithdrawn =
+              c.isWithdrawn !== undefined ? c.isWithdrawn : c[4];
+
+            // Reverse-lookup token symbol from tokenId using contract's tokenSymbols mapping
+            const tokenSymbol = await contractForRead.tokenSymbols(tokenId);
+            const decimals = getTokenDecimals(tokenSymbol);
+
+            const durationMs = Number(duration) * 1000;
+            const startTime = Number(chainStartTime) * 1000;
+            const targetTime = startTime + durationMs;
+
+            const recoveredChallenge = {
+              walletAddress: walletAddress.toLowerCase(),
+              onChainId: onChainId,
+              title: `Recovered Challenge #${onChainId}`,
+              targetTime: targetTime,
+              durationValue: Number(duration) / 3600,
+              durationUnit: "hours",
+              stakeAmount: formatUnits(stakeAmount, decimals),
+              token: tokenSymbol,
+              tokenDecimals: decimals,
+              penaltyType: ["charity", "dev", "lock", "burn"][
+                Number(penaltyType)
+              ],
+              penaltyPercent: Number(penaltyPercent),
+              isSuccess: isSuccess,
+              isWithdrawn: isWithdrawn,
+              creationTxHash: event.transactionHash,
+              createdAt: startTime,
+              status: "active",
+            };
+
+            await addDoc(
+              collection(db, "touchgrass_challenges"),
+              recoveredChallenge,
+            );
+            showNotification(
+              `Recovered missing challenge #${onChainId}`,
+              "success",
+            );
           } catch (innerError) {
             // Log full error for debugging - recovery failures need visibility
             console.error("Challenge recovery failed for event:", innerError);
           }
         }
+
+        // Clean up stale pending challenges (older than 10 minutes)
+        const stalePending = challenges.filter(
+          (c) => c.status === "pending" && Date.now() - c.createdAt > 600000,
+        );
+        const staleProvider = readProv || signer.provider;
+        for (const stale of stalePending) {
+          try {
+            const receipt = await staleProvider.getTransactionReceipt(
+              stale.creationTxHash,
+            );
+            if (!receipt || receipt.status === 0) {
+              await updateDoc(doc(db, "touchgrass_challenges", stale.id), {
+                status: "failed",
+              });
+            }
+          } catch (e) {
+            console.error("Stale pending check failed:", e);
+          }
+        }
       } catch (e) {
         console.error("Reconciliation Error:", e);
+        showNotification("Challenge sync failed – please refresh", "error");
       } finally {
+        clearTimeout(safetyTimeout);
         isReconciling.current = false;
       }
     };
@@ -466,14 +540,14 @@ export default function TouchGrass() {
       if (!walletConnected || challenges.length === 0 || !signer) return;
 
       const activeLocalChallenges = challenges.filter(
-        (c) => !c.isSuccess && !c.isWithdrawn
+        (c) => !c.isSuccess && !c.isWithdrawn,
       );
 
       try {
         const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
         for (const challenge of activeLocalChallenges) {
-          if (!challenge.onChainId) return;
+          if (!challenge.onChainId) continue;
 
           const c = await contract.challenges(challenge.onChainId);
           const isSuccessChain = c.isSuccess !== undefined ? c.isSuccess : c[3];
@@ -534,6 +608,15 @@ export default function TouchGrass() {
   const confirmStartChallenge = async () => {
     if (!walletConnected || !signer) return;
 
+    // Guard against Firebase auth not being ready
+    if (!user) {
+      showNotification(
+        "Still connecting... please try again in a moment",
+        "error",
+      );
+      return;
+    }
+
     // Validate input
     if (draftCustomTitle === "" && draftObjective === null) {
       showNotification("Oops! Don't forget to set your goal first 🎯", "error");
@@ -549,7 +632,7 @@ export default function TouchGrass() {
     if (parseFloat(draftStakeAmount) < minRequired) {
       showNotification(
         `Minimum commitment: ${minRequired} ${draftToken}. Go big or go home! 💪`,
-        "error"
+        "error",
       );
       return;
     }
@@ -589,27 +672,27 @@ export default function TouchGrass() {
         const tokenContract = new Contract(
           tokenConfig.address,
           ERC20_ABI,
-          signer
+          signer,
         );
 
         const allowance = await tokenContract.allowance(
           walletAddress,
-          CONTRACT_ADDRESS
+          CONTRACT_ADDRESS,
         );
 
         if (allowance < totalAmount) {
           showNotification(
             "One quick signature to approve – almost there!",
-            "success"
+            "success",
           );
           const approveTx = await tokenContract.approve(
             CONTRACT_ADDRESS,
-            totalAmount
+            totalAmount,
           );
           await approveTx.wait();
           showNotification(
             "Approved! Locking in your commitment...",
-            "success"
+            "success",
           );
         }
       }
@@ -621,55 +704,110 @@ export default function TouchGrass() {
         durationSeconds, // Duration in seconds
         penaltyMap[draftPenaltyType], // Penalty type enum
         draftPenaltyPercent, // Penalty percentage
-        { value: txValue, gasLimit: 300000 }
+        { value: txValue, gasLimit: 300000 },
       );
 
-      const receipt = await tx.wait();
-
-      // Parse ChallengeCreated event to get the on-chain ID
-      let onChainId = null;
-      for (const log of receipt.logs) {
-        try {
-          const parsed = contract.interface.parseLog(log);
-          if (parsed.name === "ChallengeCreated") {
-            onChainId = parsed.args[0].toString();
-            break;
-          }
-        } catch (e) {
-          /* ignore non-contract logs */
-        }
-      }
-
-      // Create Firestore document
-      const newChallenge = {
+      // --- Optimistic Firestore write (immediately after broadcast) ---
+      const pendingChallenge = {
         walletAddress: walletAddress.toLowerCase(),
-        onChainId,
+        onChainId: null,
         title: draftObjective ? draftObjective.title : draftCustomTitle,
         targetTime: Date.now() + durationMs,
         durationValue: timeValue,
         durationUnit: unit,
-        stakeAmount: draftStakeAmount.toString(), // String for Firestore precision
-        token: draftToken, // Store token symbol
-        tokenDecimals: tokenConfig.decimals, // Store decimals for recovery
+        stakeAmount: draftStakeAmount.toString(),
+        token: draftToken,
+        tokenDecimals: tokenConfig.decimals,
         penaltyType: draftPenaltyType,
         penaltyPercent: draftPenaltyPercent,
         isSuccess: false,
         isWithdrawn: false,
         creationTxHash: tx.hash,
         createdAt: Date.now(),
+        status: "pending",
       };
 
+      let docRef = null;
       try {
-        const docRef = await addDoc(
+        docRef = await addDoc(
           collection(db, "touchgrass_challenges"),
-          newChallenge
+          pendingChallenge,
         );
-        navigate(`/active/${docRef.id}`);
-        showNotification("Let's go! Your challenge is live 🔥");
-        fetchBalance();
       } catch (dbError) {
-        console.error("DB Write Failed but Chain Success:", dbError);
-        showNotification("Committed! Syncing your challenge now...", "success");
+        console.error("Pending write failed:", dbError);
+        // Continue — we'll still try to confirm the tx
+      }
+
+      // --- Wait for on-chain confirmation (processing overlay stays up) ---
+      try {
+        const receipt = await signer.provider.waitForTransaction(
+          tx.hash,
+          1,
+          60000,
+        );
+
+        if (receipt && receipt.status === 1) {
+          // Parse ChallengeCreated event to get the on-chain ID
+          let onChainId = null;
+          const contract2 = new Contract(
+            CONTRACT_ADDRESS,
+            CONTRACT_ABI,
+            signer,
+          );
+          for (const log of receipt.logs) {
+            try {
+              const parsed = contract2.interface.parseLog(log);
+              if (parsed.name === "ChallengeCreated") {
+                onChainId = parsed.args[0].toString();
+                break;
+              }
+            } catch (e) {
+              /* ignore non-contract logs */
+            }
+          }
+
+          if (docRef) {
+            // Update pending → active
+            await updateDoc(doc(db, "touchgrass_challenges", docRef.id), {
+              status: "active",
+              onChainId,
+            });
+            navigate(`/active/${docRef.id}`);
+            showNotification("Let's go! Your challenge is live 🔥");
+          } else {
+            // Pending write had failed — write the full challenge now
+            const fullChallenge = {
+              ...pendingChallenge,
+              status: "active",
+              onChainId,
+            };
+            const newDocRef = await addDoc(
+              collection(db, "touchgrass_challenges"),
+              fullChallenge,
+            );
+            navigate(`/active/${newDocRef.id}`);
+            showNotification("Let's go! Your challenge is live 🔥");
+          }
+          fetchBalance();
+        } else {
+          // Transaction reverted on-chain
+          if (docRef) {
+            await updateDoc(doc(db, "touchgrass_challenges", docRef.id), {
+              status: "failed",
+            });
+          }
+          showNotification(
+            "Transaction failed on-chain — no funds were locked",
+            "error",
+          );
+        }
+      } catch (waitError) {
+        // Timeout or provider error during confirmation wait
+        console.error("Confirmation wait failed:", waitError);
+        showNotification(
+          "Transaction submitted but taking longer than expected. We'll sync it automatically.",
+          "success",
+        );
         navigate("/");
       }
     } catch (error) {
@@ -677,17 +815,17 @@ export default function TouchGrass() {
       if (error.message?.includes("user rejected")) {
         showNotification(
           "You cancelled – no worries, try again when ready",
-          "error"
+          "error",
         );
       } else if (error.message?.includes("TokenNotSupported")) {
         showNotification(
           `${draftToken} isn't available on Base yet – try ETH or USDC`,
-          "error"
+          "error",
         );
       } else {
         showNotification(
           error.message || "Something went wrong – please try again",
-          "error"
+          "error",
         );
       }
     } finally {
@@ -698,7 +836,7 @@ export default function TouchGrass() {
   const handleWithdraw = async (
     id,
     donationPercent = 0,
-    donationTarget = "charity"
+    donationTarget = "charity",
   ) => {
     const challenge = challenges.find((c) => c.id === id);
     if (!challenge || !signer) return;
@@ -726,7 +864,7 @@ export default function TouchGrass() {
           challenge.onChainId,
           Math.floor(donationPercent),
           donationTargetEnum,
-          { gasLimit: 200000 }
+          { gasLimit: 200000 },
         );
       }
 
@@ -737,7 +875,7 @@ export default function TouchGrass() {
         withdrawalTxHash: tx.hash,
         voluntaryDonationPercent: donationPercent,
         donationTarget: donationTarget,
-        completedAt: Date.now(),
+        completedAt: completedAt ? completedAt : Date.now(),
       });
       showNotification("Done! Your funds are on their way 💰", "success");
       fetchBalance();
@@ -748,7 +886,7 @@ export default function TouchGrass() {
       else if (error.message.includes("active"))
         showNotification(
           "Your challenge is still running – keep going!",
-          "error"
+          "error",
         );
       else
         showNotification("Transaction didn't go through – try again", "error");
@@ -760,7 +898,7 @@ export default function TouchGrass() {
   const handleUpload = async (
     id,
     isExternalSuccess = false,
-    errorMessage = ""
+    errorMessage = "",
   ) => {
     setVerificationStatus("verifying");
     if (isExternalSuccess === true) {
@@ -792,6 +930,7 @@ export default function TouchGrass() {
   const openChallenge = (id) => {
     const c = challenges.find((ch) => ch.id === id);
     if (!c) return;
+    if (c.status === "pending" || c.status === "failed") return;
     // setActiveChallengeId(id);
     setVerificationStatus("idle");
     setResultDonationPercent(0);
@@ -802,7 +941,7 @@ export default function TouchGrass() {
   };
 
   const currentFee = `${parseFloat(tokenFee).toFixed(
-    isNativeToken(draftToken) ? 6 : 2
+    isNativeToken(draftToken) ? 6 : 2,
   )} ${draftToken}`;
 
   return (

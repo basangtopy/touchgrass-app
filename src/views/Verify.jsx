@@ -32,6 +32,15 @@ export default function Verify({
   const navigate = useNavigate();
   const activeChallenge = challenges.find((c) => c.id === id);
 
+  // Redirect pending/failed challenges to dashboard
+  if (
+    activeChallenge?.status === "pending" ||
+    activeChallenge?.status === "failed"
+  ) {
+    navigate("/");
+    return null;
+  }
+
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -73,7 +82,7 @@ export default function Verify({
       ) {
         showNotification(
           "RAW files are not fully supported in browser. Please use JPEG/PNG for best results.",
-          "error"
+          "error",
         );
       }
 
@@ -112,7 +121,7 @@ export default function Verify({
 
       const cloudinaryRes = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        { method: "POST", body: formData }
+        { method: "POST", body: formData },
       );
 
       const cloudinaryData = await cloudinaryRes.json();
