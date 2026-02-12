@@ -366,23 +366,44 @@ export default function TouchGrass() {
         // (walletAddress is lowercased for DB queries, but events need checksummed addresses)
         const filter = contractForQuery.filters.ChallengeCreated(null, address);
 
-        // Query only recent blocks to avoid "exceeds max block range" RPC errors
-        const currentBlock = await providerForQuery.getBlockNumber();
-        const fromBlock = Math.max(0, currentBlock - 49000);
+        // Paginated scanning with localStorage progress tracking
+        const CHUNK_SIZE = 9;
+        const MAX_CATCH_UP = 1800; // ~1 hour on Base
+        const storageKey = `tg_lastReconcileBlock_${walletAddress}`;
 
-        // Retry logic for queryFilter (2 retries, 2s delay)
-        let events = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            events = await contractForQuery.queryFilter(
-              filter,
-              fromBlock,
-              "latest",
-            );
-            break;
-          } catch (e) {
-            if (attempt === 2) throw e;
-            await new Promise((r) => setTimeout(r, 2000));
+        const currentBlock = await providerForQuery.getBlockNumber();
+        const lastBlock = parseInt(localStorage.getItem(storageKey) || "0");
+
+        const gap = lastBlock > 0 ? currentBlock - lastBlock : MAX_CATCH_UP;
+        const scanFrom =
+          gap <= MAX_CATCH_UP
+            ? lastBlock > 0
+              ? lastBlock + 1
+              : Math.max(0, currentBlock - MAX_CATCH_UP)
+            : Math.max(0, currentBlock - MAX_CATCH_UP);
+
+        let events = [];
+        let scanCompleted = true;
+
+        if (scanFrom <= currentBlock) {
+          for (
+            let from = scanFrom;
+            from <= currentBlock;
+            from += CHUNK_SIZE + 1
+          ) {
+            const to = Math.min(from + CHUNK_SIZE, currentBlock);
+            try {
+              const chunk = await contractForQuery.queryFilter(
+                filter,
+                from,
+                to,
+              );
+              events.push(...chunk);
+            } catch (e) {
+              console.error(`queryFilter chunk ${from}-${to} failed:`, e);
+              scanCompleted = false;
+              break;
+            }
           }
         }
 
@@ -513,6 +534,11 @@ export default function TouchGrass() {
             console.error("Stale pending check failed:", e);
           }
         }
+
+        // Save scan progress (only if scan completed without chunk errors)
+        if (scanCompleted) {
+          localStorage.setItem(storageKey, currentBlock.toString());
+        }
       } catch (e) {
         console.error("Reconciliation Error:", e);
         showNotification("Challenge sync failed – please refresh", "error");
@@ -522,17 +548,31 @@ export default function TouchGrass() {
       }
     };
 
-    if (walletConnected) reconcileChallenges();
-    const interval = setInterval(reconcileChallenges, 30000);
-    return () => clearInterval(interval);
-  }, [
-    walletConnected,
-    walletAddress,
-    user,
-    challenges.length,
-    signer,
-    address,
-  ]);
+    if (!walletConnected || !walletAddress || !user || !signer) return;
+
+    // Run on initial mount (catch up after being away)
+    reconcileChallenges();
+
+    // Run when user returns to tab (after switching apps, locking phone)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        reconcileChallenges();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Only poll if there are unresolved pending challenges
+    const hasPending = challenges.some((c) => c.status === "pending");
+    let interval = null;
+    if (hasPending) {
+      interval = setInterval(reconcileChallenges, 60000);
+    }
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (interval) clearInterval(interval);
+    };
+  }, [walletConnected, walletAddress, user, challenges, signer, address]);
 
   // --- 5. Chain Sync ---
   useEffect(() => {
@@ -570,7 +610,7 @@ export default function TouchGrass() {
         console.debug("Chain sync check failed:", e.message);
       }
     };
-    const interval = setInterval(checkContractState, 5000);
+    const interval = setInterval(checkContractState, 30000);
     return () => clearInterval(interval);
   }, [walletConnected, challenges, signer]);
 
