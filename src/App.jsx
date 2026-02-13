@@ -915,15 +915,15 @@ export default function TouchGrass() {
         withdrawalTxHash: tx.hash,
         voluntaryDonationPercent: donationPercent,
         donationTarget: donationTarget,
-        completedAt: completedAt ? completedAt : Date.now(),
+        completedAt: challenge.completedAt ? challenge.completedAt : Date.now(),
       });
       showNotification("Done! Your funds are on their way 💰", "success");
       fetchBalance();
     } catch (error) {
       console.error(error);
-      if (error.message.includes("locked"))
+      if (error.message?.includes("locked"))
         showNotification("Your funds are still in timeout ⏳", "error");
-      else if (error.message.includes("active"))
+      else if (error.message?.includes("active"))
         showNotification(
           "Your challenge is still running – keep going!",
           "error",
