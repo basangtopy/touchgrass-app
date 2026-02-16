@@ -258,6 +258,8 @@ Your stake is donated to public health causes. Your failure becomes someone else
 
 **Best for:** People who want a safety net of meaning. If you fail, at least you did some good.
 
+> **Transparency Note:** The charity wallet is a **multi-signature wallet** with signatories from both the TouchGrass team and community members. No single person can access charity funds—every charity project must be proposed and **approved by the community** before funds are disbursed. All transactions are verifiable on-chain.
+
 ### 🛠️ Support the Dev Team
 
 Your stake goes to the TouchGrass treasury to fund ongoing development and improvements.
@@ -307,6 +309,10 @@ You probably need a tiny bit of ETH for gas fees. Make sure your wallet has some
 ### "Can I cancel a challenge after I start it?"
 
 No. Once you lock your stake, you're committed. That's the whole point! The only way out is to complete the challenge or wait for the penalty.
+
+### "How do I know the charity/treasury funds aren't misused?"
+
+Both the charity and treasury wallets are **multi-signature wallets**. The charity wallet requires approval from both team and community signatories, and every charity project must be **voted on by the community** before any funds are spent. The treasury wallet is managed by core team multi-sig. All transactions happen on-chain, so anyone can audit them at any time.
 
 ---
 

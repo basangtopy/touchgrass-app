@@ -327,7 +327,7 @@ const [tokenMinStake, setTokenMinStake] = useState("0");
 ```javascript
 const q = query(
   collection(db, "touchgrass_challenges"),
-  where("walletAddress", "==", walletAddress.toLowerCase())
+  where("walletAddress", "==", walletAddress.toLowerCase()),
 );
 onSnapshot(q, (snapshot) => {
   const loaded = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -529,6 +529,20 @@ const OBJECTIVES = [
 1. **AI Verifier**: Server must be honest (signs successful verifications)
 2. **Firebase**: Off-chain data is convenience, not source of truth
 3. **Oracles**: Chainlink price feeds assumed accurate
+
+### Fund Governance
+
+Both critical fund wallets employ multi-signature governance:
+
+| Wallet       | Signatories           | Approval Process                                         |
+| ------------ | --------------------- | -------------------------------------------------------- |
+| **Charity**  | Core team + community | Community approval required before charity disbursements |
+| **Treasury** | Core team members     | Multi-party team approval for all spending               |
+
+- **Charity Wallet (Multi-Sig):** Signatories include both core team members and trusted community members. No single person can access charity funds. Every charity project must be proposed and approved by the community before funds are released. All transactions are on-chain and publicly auditable.
+- **Treasury Wallet (Multi-Sig):** Signatories are core team members. Multiple team approvals are required for any transaction. On-chain transaction history provides a permanent audit trail.
+
+The smart contract natively supports multi-sig wallets via the `whitelistMultiSig()` function, enabling seamless integration with solutions like Safe (formerly Gnosis Safe).
 
 ---
 

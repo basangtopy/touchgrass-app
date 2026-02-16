@@ -201,6 +201,21 @@ export default function Documentation({ setStep, walletConnected }) {
                 commitment. That's not a loss—that's a different kind of win.
                 And next time? You've got even more reason to follow through.
               </div>
+
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                <strong className="text-emerald-300 block mb-1">
+                  🔒 Full Transparency, Always
+                </strong>
+                Our charity wallet is a <strong>multi-signature wallet</strong>{" "}
+                — controlled by signatories from both the TouchGrass team and
+                community members. No single person can access charity funds.
+                Every charity project must be{" "}
+                <strong className="text-emerald-300">
+                  proposed and approved by the community
+                </strong>{" "}
+                before any funds are disbursed. All transactions are on-chain
+                and publicly verifiable.
+              </div>
             </div>
           </Section>
         </Card>
@@ -257,6 +272,17 @@ export default function Documentation({ setStep, walletConnected }) {
                 </strong>
                 We pull your name from Farcaster, Base Names, or ENS for a more
                 personal touch.
+              </div>
+              <div className="pl-3 border-l-2 border-amber-500/30">
+                <strong className="text-amber-200 text-xs uppercase block mb-1">
+                  Fund Governance (Multi-Sig)
+                </strong>
+                Both the charity and treasury wallets are{" "}
+                <strong>multi-signature wallets</strong>. The charity wallet has
+                signatories from the team and community — with every charity
+                project requiring community approval. The treasury wallet is
+                managed by team multi-sig. No single person controls where funds
+                go.
               </div>
             </div>
           </Section>

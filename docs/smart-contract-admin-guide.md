@@ -106,7 +106,7 @@ await contract.addToken(
   "0x0000000000000000000000000000000000000000", // Native token
   "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70", // ETH/USD on Base
   18, // Decimals
-  3600 // 1 hour staleness tolerance
+  3600, // 1 hour staleness tolerance
 );
 
 // Add USDC
@@ -115,7 +115,7 @@ await contract.addToken(
   "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
   "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B", // USDC/USD on Base
   6,
-  86400 // 24 hour (stablecoins can be longer)
+  86400, // 24 hour (stablecoins can be longer)
 );
 ```
 
@@ -139,7 +139,7 @@ await contract.addToken(
   "0x...", // DAI contract address
   "0x...", // DAI/USD Chainlink feed
   18, // DAI has 18 decimals
-  3600 // 1 hour staleness
+  3600, // 1 hour staleness
 );
 ```
 
@@ -182,7 +182,7 @@ if (locked == 0n && pending == 0n) {
 ```javascript
 await contract.updatePriceFeed(
   "ETH",
-  "0x..." // New price feed address
+  "0x...", // New price feed address
 );
 ```
 
@@ -198,7 +198,7 @@ When Chainlink oracles fail, enable manual pricing:
 // Set ETH price to $2000 (18 decimals)
 await contract.enableFallbackPrice(
   "ETH",
-  ethers.parseEther("2000") // 2000e18
+  ethers.parseEther("2000"), // 2000e18
 );
 ```
 
@@ -294,7 +294,7 @@ No time-lock—minimum stake changes are immediate.
 // Set min to 10 minutes, max to 90 days
 await contract.updateDurationBounds(
   10, // 10 minutes (input is in minutes)
-  90 // 90 days (input is in days)
+  90, // 90 days (input is in days)
 );
 ```
 
@@ -442,7 +442,7 @@ await contract.recoverERC20BySymbol("USDC", treasuryAddress);
 // For tokens accidentally sent that aren't in supported list
 await contract.recoverERC20ByAddress(
   "0x...", // Token contract
-  treasuryAddress
+  treasuryAddress,
 );
 ```
 
@@ -451,7 +451,7 @@ await contract.recoverERC20ByAddress(
 ```javascript
 const results = await contract.batchRecoverTokens(
   ["ETH", "USDC", "DAI"],
-  treasuryAddress
+  treasuryAddress,
 );
 
 // Each result: { symbol, success, amount, errorReason }
@@ -487,6 +487,12 @@ await contract.connect(newOwner).acceptOwnership();
 ```
 
 ### Transfer to Multi-Sig
+
+TouchGrass uses multi-sig governance for critical wallets:
+
+- **Charity Wallet**: Multi-sig with signatories from the core team **and community members**. All charity project disbursements require community approval.
+- **Treasury Wallet**: Multi-sig with signatories from the core team only, enabling operational agility with multi-party oversight.
+- **Contract Ownership**: Can optionally be transferred to a multi-sig for maximum security.
 
 ```javascript
 // First whitelist the multi-sig
@@ -672,6 +678,8 @@ await contract.sweepPenalty(challengeId);
 
 ### Address Updates
 
+> **Governance Note:** The charity and treasury wallet addresses should point to multi-sig wallets. The charity wallet multi-sig should include community signatories alongside team members, and all charity disbursements should be community-approved. The treasury wallet multi-sig should include core team members only.
+
 **Update Verifier:**
 
 ```javascript
@@ -681,7 +689,8 @@ await contract.setVerifier(newVerifierAddress);
 **Update Charity Wallet:**
 
 ```javascript
-await contract.setCharityWallet(newCharityAddress);
+// Should be a multi-sig with team + community signatories
+await contract.setCharityWallet(newCharityMultiSigAddress);
 // → Old address removed from trustedRecipients
 // → New address added to trustedRecipients
 ```
@@ -689,7 +698,8 @@ await contract.setCharityWallet(newCharityAddress);
 **Update Treasury Wallet:**
 
 ```javascript
-await contract.setTreasuryWallet(newTreasuryAddress);
+// Should be a multi-sig with team signatories
+await contract.setTreasuryWallet(newTreasuryMultiSigAddress);
 // → Old address removed from trustedRecipients
 // → New address added to trustedRecipients
 ```
