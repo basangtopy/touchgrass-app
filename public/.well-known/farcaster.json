@@ -7,16 +7,16 @@
   "miniapp": {
     "version": "1",
     "name": "TouchGrass",
-    "homeUrl": "https://touchgrassapp.netlify.app",
-    "iconUrl": "https://touchgrassapp.netlify.app/icon-miniapp.png",
-    "splashImageUrl": "https://touchgrassapp.netlify.app/splash-miniapp.png",
+    "homeUrl": "https://ontouchgrass.xyz/",
+    "iconUrl": "https://ontouchgrass.xyz/icon-miniapp.png",
+    "splashImageUrl": "https://ontouchgrass.xyz/splash-miniapp.png",
     "splashBackgroundColor": "#0F172A",
     "subtitle": "Stake and commit to yourself",
     "description": "Create accountability challenges with crypto stakes. Set a goal, lock your funds, verify with AI, and earn it back when you succeed.",
     "screenshotUrls": [
-      "https://touchgrassapp.netlify.app/tg-screenshot1.png",
-      "https://touchgrassapp.netlify.app/tg-screenshot2.png",
-      "https://touchgrassapp.netlify.app/tg-screenshot4.png"
+      "https://ontouchgrass.xyz/tg-screenshot1.png",
+      "https://ontouchgrass.xyz/tg-screenshot2.png",
+      "https://ontouchgrass.xyz/tg-screenshot4.png"
     ],
     "primaryCategory": "productivity",
     "tags": [
@@ -26,10 +26,10 @@
       "fitness",
       "habits"
     ],
-    "heroImageUrl": "https://touchgrassapp.netlify.app/hero.png",
+    "heroImageUrl": "https://ontouchgrass.xyz/hero.png",
     "tagline": "Stake your commitment",
     "ogTitle": "TouchGrass - Stake Your Goals",
     "ogDescription": "Put your money where your motivation is",
-    "ogImageUrl": "https://touchgrassapp.netlify.app/og.png"
+    "ogImageUrl": "https://ontouchgrass.xyz/og.png"
   }
 }
